@@ -27,14 +27,15 @@ var model = {
 			src: "img/cat_picture5.jpeg"
 		}
 	],
-	catId: 0 // show the first cat as default
+	catId: 0, // show the first cat as default
+	adminDisplay: false
 };
 
 var octopus = {
 	init: function() {
 		catListView.init();
-		// model.catId = 0;
 		catImgView.init();
+		adminView.init();
 	},
 
 	getData: function() {
@@ -52,9 +53,28 @@ var octopus = {
 	},
 
 	addCount: function() {
-		//increase the click counts
+		// increase the click counts
 		model.cats[model.catId].click++;
 		catImgView.render();
+	},
+
+	adminStatus: function() {
+		// get the state of admin
+		return model.admin;
+	},
+	showAdmin: function() {
+		model.adminDisplay = true;
+		adminView.show();
+	},
+	hideAdmin: function() {
+		model.adminDisplay = false;
+		adminView.hide();
+	},
+	update: function() {
+		model.cats[model.catId] = adminView.save();
+		catListView.render();
+		catImgView.render();
+		this.hideAdmin();
 	}
 };
 
@@ -81,6 +101,7 @@ var catListView = {
 				return function() {
 					octopus.setId(lockIndex);
 					catImgView.render();
+					octopus.hideAdmin();
 			}
 			})(i));
 		};
@@ -97,15 +118,62 @@ var catImgView = {
 		// set listener on click
 		this.catImg.on('click', function() {
 			octopus.addCount();
+			adminView.render();
 		});
 		this.render();
 	},
 	render: function() {
 		var cat = octopus.getCat();
-		$('#cat-name').text(cat.name);
+		this.catName.text(cat.name);
 		$('#cat-img').attr('src', cat.src);
 		$('#cat-count').text(cat.click);
 	}
 };
+
+var adminView = {
+	init: function() {
+		// get the DOM elements
+		this.adminButton = $('#admin-button');
+		this.cancelButton = $('#admin-cancel');
+		this.saveButton = $('#admin-save');
+		this.adminForm = $('#admin');
+
+		// add listener to button
+		this.adminButton.on('click', function() {
+			octopus.showAdmin();
+		});
+		this.cancelButton.on('click', function() {
+			octopus.hideAdmin();
+		});
+		this.saveButton.on('click', function() {
+			octopus.update();
+		});
+
+		// close the admin as default
+		$('#admin').hide()
+	},
+	render: function() {
+		var cat = octopus.getCat();
+		// don't use attr set the value default~
+		$('#name').prop('value', cat.name);
+		$('#url').prop('value', cat.src);
+		$('#click').prop('value', cat.click);
+	},
+	show: function() {
+		this.render();
+		this.adminForm.show();
+	},
+	hide: function() {
+		this.adminForm.hide();
+	},
+	save: function() {
+		var catNew = {
+			click: $('#click').val(),
+			name: $('#name').val(),
+			src: $('#url').val(),
+		}
+		return catNew;
+	}
+}
 
 octopus.init();
